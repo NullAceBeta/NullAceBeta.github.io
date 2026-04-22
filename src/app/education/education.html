@@ -1,1 +1,8 @@
-<p>education works!</p>
+<section>
+  <h2>Educación</h2>
+  <div *ngFor="let edu of educationList">
+    <h3>{{ edu.degree }}</h3>
+    <p>{{ edu.university }}</p>
+    <span>{{ edu.startDate }} - {{ edu.endDate }}</span>
+  </div>
+</section>

@@ -1,1 +1,9 @@
-<p>languages works!</p>
+<section class="cv-section">
+  <h3>Languages</h3>
+  <ul>
+    <li *ngFor="let lang of languages">
+      <strong>{{ lang.name }}</strong> — {{ lang.level }}
+      <span *ngIf="lang.certification"> ({{ lang.certification }})</span>
+    </li>
+  </ul>
+</section>

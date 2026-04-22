@@ -1,1 +1,28 @@
-<p>header works!</p>
+<header class="cv-header">
+
+  <!-- Columna izquierda: nombre y meta -->
+  <div class="header-left">
+    <h1 class="header-name">{{ header.name }}</h1>
+    <p class="header-goal">{{ header.goalLife }}</p>
+  </div>
+
+  <!-- Centro: foto circular pequeña -->
+  <div class="header-center">
+    <img class="profile-pic" [src]="header.photoUrl" alt="Foto de perfil">
+  </div>
+
+  <!-- Columna derecha: contacto y redes -->
+  <div class="header-right">
+    <ul class="contact-list">
+      <li>{{ header.location }}</li>
+      <li>
+        <a href="mailto:{{ header.email }}">{{ header.email }}</a>
+      </li>
+      <li>{{ header.phoneNumber }}</li>
+      <li>
+        <a [href]="header.socialNetwork" target="_blank">Professional Profile</a>
+      </li>
+    </ul>
+  </div>
+
+</header>
