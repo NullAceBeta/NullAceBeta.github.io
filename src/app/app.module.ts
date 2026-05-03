@@ -29,7 +29,7 @@ import { Interests } from './interests/interests';
   ],
   imports: [
     BrowserModule,
-    // Inicialización de Firebase con las credenciales de tu environment
+    HttpClientModule,
     AngularFireModule.initializeApp(environment.firebaseConfig),
     AngularFirestoreModule
   ],
