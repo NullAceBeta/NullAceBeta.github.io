@@ -9,10 +9,8 @@ import { map } from 'rxjs/operators';
 export class PortfolioService {
   private http = inject(HttpClient);
   
-  // URL directa a la API REST de tu proyecto en Firebase
-  private baseUrl = 'https://firestore.googleapis.com/v1/projects/my-cv-b5177/databases/(default)/documents/portfolio';
+  private baseUrl = 'https://firestore.googleapis.com/v1/projects/my-cv-b5177/databases/(default)/documents';
 
-  // Función recursiva para limpiar el formato estricto de Firebase REST
   private parseValue(valueObj: any): any {
     if (!valueObj) return null;
     if (valueObj.stringValue !== undefined) return valueObj.stringValue;
@@ -34,33 +32,39 @@ export class PortfolioService {
     }
     return extracted;
   }
+  
+  private extractCollection(response: any) {
+    if (!response.documents) return [];
+    return response.documents.map((doc: any) => this.extractFields(doc));
+  }
 
-  // Peticiones HTTP directas a Google Cloud
+
   getHeader(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/header`).pipe(map(res => this.extractFields(res)));
+      // Nota: Asumimos que los datos del header están en un documento con id 'header' en la colección 'portfolio'
+    return this.http.get(`${this.baseUrl}/portfolio/header`).pipe(map(res => this.extractFields(res)));
   }
 
   getEducation(): Observable<any[]> {
-    return this.http.get(`${this.baseUrl}/education`).pipe(map(res => this.extractFields(res)['portfolio'] || []));
+    return this.http.get(`${this.baseUrl}/education`).pipe(map(res => this.extractCollection(res)));
   }
 
   getWorkExperience(): Observable<any[]> {
-    return this.http.get(`${this.baseUrl}/work-experience`).pipe(map(res => this.extractFields(res)['portfolio'] || []));
+    return this.http.get(`${this.baseUrl}/work-experience`).pipe(map(res => this.extractCollection(res)));
   }
 
   getSkills(): Observable<any[]> {
-    return this.http.get(`${this.baseUrl}/skills`).pipe(map(res => this.extractFields(res)['portfolio'] || []));
+    return this.http.get(`${this.baseUrl}/skills`).pipe(map(res => this.extractCollection(res)));
   }
 
   getCertificates(): Observable<any[]> {
-    return this.http.get(`${this.baseUrl}/certificates`).pipe(map(res => this.extractFields(res)['portfolio'] || []));
+    return this.http.get(`${this.baseUrl}/certificates`).pipe(map(res => this.extractCollection(res)));
   }
 
   getLanguages(): Observable<any[]> {
-    return this.http.get(`${this.baseUrl}/languages`).pipe(map(res => this.extractFields(res)['portfolio'] || []));
+    return this.http.get(`${this.baseUrl}/languages`).pipe(map(res => this.extractCollection(res)));
   }
 
   getInterests(): Observable<any[]> {
-    return this.http.get(`${this.baseUrl}/interests`).pipe(map(res => this.extractFields(res)['portfolio'] || []));
+    return this.http.get(`${this.baseUrl}/interests`).pipe(map(res => this.extractCollection(res)));
   }
 }
