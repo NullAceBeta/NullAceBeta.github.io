@@ -8,79 +8,75 @@ import { map, catchError } from 'rxjs/operators';
 })
 export class PortfolioService {
   private http = inject(HttpClient);
-  
-  // URL apuntando a la colección 'portfolio' dentro de tu base de datos 'my-cv'
-  private baseUrl = 'https://firestore.googleapis.com/v1/projects/my-cv-b5177/databases/(default)/documents/portfolio';
 
+  private readonly BASE =
+    'https://firestore.googleapis.com/v1/projects/my-cv-b5177/databases/(default)/documents/portfolio';
+
+  // ─── Firestore REST type deserializer ────────────────────────────────────
+  // Firestore envuelve cada valor con su tipo:
+  //   { "stringValue": "foo" } → "foo"
+  //   { "arrayValue": { "values": [...] } } → [...]
+  //   { "mapValue": { "fields": {...} } } → { ... } (recursivo)
   private parseValue(valueObj: any): any {
-    if (!valueObj) return null;
-    if (valueObj.stringValue !== undefined) return valueObj.stringValue;
-    if (valueObj.integerValue !== undefined) return parseInt(valueObj.integerValue, 10);
-    if (valueObj.doubleValue !== undefined) return parseFloat(valueObj.doubleValue);
-    if (valueObj.booleanValue !== undefined) return valueObj.booleanValue;
-    if (valueObj.mapValue !== undefined) return this.extractFields({ fields: valueObj.mapValue.fields });
-    if (valueObj.arrayValue !== undefined) {
-      return valueObj.arrayValue.values ? valueObj.arrayValue.values.map((v: any) => this.parseValue(v)) : [];
-    }
+    if (valueObj == null) return null;
+
+    if ('stringValue'  in valueObj) return valueObj.stringValue;
+    if ('integerValue' in valueObj) return Number(valueObj.integerValue);
+    if ('doubleValue'  in valueObj) return valueObj.doubleValue;
+    if ('booleanValue' in valueObj) return valueObj.booleanValue;
+    if ('nullValue'    in valueObj) return null;
+    if ('timestampValue' in valueObj) return valueObj.timestampValue;
+
+    if ('mapValue' in valueObj)
+      return this.flattenDocument(valueObj.mapValue?.fields ?? {});
+
+    if ('arrayValue' in valueObj)
+      return (valueObj.arrayValue?.values ?? []).map((v: any) => this.parseValue(v));
+
     return null;
   }
 
-  private extractFields(document: any) {
-    if (!document || !document.fields) return {};
-    const extracted: any = {};
-    for (const key in document.fields) {
-      extracted[key] = this.parseValue(document.fields[key]);
+  // Convierte el mapa de fields de Firestore en un objeto JS plano
+  private flattenDocument(fields: Record<string, any>): Record<string, any> {
+    const result: Record<string, any> = {};
+    for (const key in fields) {
+      result[key] = this.parseValue(fields[key]);
     }
-    return extracted;
+    return result;
   }
 
-  // Peticiones HTTP apuntando a documentos específicos dentro de la colección 'portfolio'
-  getHeader(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/header`).pipe(
-      map(res => this.extractFields(res)),
-      catchError(() => of({})) // Si el documento no existe (404), devuelve un objeto vacío
+  // Extrae y aplana el documento completo que devuelve el endpoint REST
+  private extractDoc(response: any): Record<string, any> {
+    return this.flattenDocument(response?.fields ?? {});
+  }
+
+  // ─── Endpoints ───────────────────────────────────────────────────────────
+
+  // header → objeto plano (campos directos, sin propiedad "lista")
+  getHeader(): Observable<Record<string, any>> {
+    return this.http.get(`${this.BASE}/header`).pipe(
+      map(res => this.extractDoc(res)),
+      catchError(() => of({}))   // 404 / red → objeto vacío
     );
   }
 
-  getEducation(): Observable<any[]> {
-    return this.http.get(`${this.baseUrl}/education`).pipe(
-      map(res => this.extractFields(res)['lista'] || []),
-      catchError(() => of([])) // Si el documento no existe (404), devuelve un array vacío
-    );
-  }
-
-  getWorkExperience(): Observable<any[]> {
-    return this.http.get(`${this.baseUrl}/work-experience`).pipe(
-      map(res => this.extractFields(res)['lista'] || []),
+  // Factoría interna: lee un documento y devuelve su propiedad "lista"
+  // Si el documento no existe (404) devuelve [] sin romper la app
+  private getList(docName: string): Observable<any[]> {
+    return this.http.get(`${this.BASE}/${docName}`).pipe(
+      map(res => {
+        const doc = this.extractDoc(res);
+        // "lista" debe ser un array; si por alguna razón no lo es, devuelve []
+        return Array.isArray(doc['lista']) ? doc['lista'] : [];
+      }),
       catchError(() => of([]))
     );
   }
 
-  getSkills(): Observable<any[]> {
-    return this.http.get(`${this.baseUrl}/skills`).pipe(
-      map(res => this.extractFields(res)['lista'] || []),
-      catchError(() => of([]))
-    );
-  }
-
-  getCertificates(): Observable<any[]> {
-    return this.http.get(`${this.baseUrl}/certificates`).pipe(
-      map(res => this.extractFields(res)['lista'] || []),
-      catchError(() => of([]))
-    );
-  }
-
-  getLanguages(): Observable<any[]> {
-    return this.http.get(`${this.baseUrl}/languages`).pipe(
-      map(res => this.extractFields(res)['lista'] || []),
-      catchError(() => of([]))
-    );
-  }
-
-  getInterests(): Observable<any[]> {
-    return this.http.get(`${this.baseUrl}/interests`).pipe(
-      map(res => this.extractFields(res)['lista'] || []),
-      catchError(() => of([]))
-    );
-  }
+  getEducation():      Observable<any[]> { return this.getList('education');       }
+  getWorkExperience(): Observable<any[]> { return this.getList('work-experience'); }
+  getSkills():         Observable<any[]> { return this.getList('skills');          }
+  getCertificates():   Observable<any[]> { return this.getList('certificates');    }
+  getLanguages():      Observable<any[]> { return this.getList('languages');       }
+  getInterests():      Observable<any[]> { return this.getList('interests');       }
 }
