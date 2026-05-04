@@ -66,8 +66,8 @@ export class PortfolioService {
     return this.http.get(`${this.BASE}/${docName}`).pipe(
       map(res => {
         const doc = this.extractDoc(res);
-        // "lista" debe ser un array; si por alguna razón no lo es, devuelve []
-        return Array.isArray(doc['lista']) ? doc['lista'] : [];
+        // "items" debe ser un array; si por alguna razón no lo es, devuelve []
+        return Array.isArray(doc['items']) ? doc['items'] : [];
       }),
       catchError(() => of([]))
     );
