@@ -1,7 +1,10 @@
-<section>
-  <h2>Certificados</h2>
-  <div *ngFor="let cert of certificates">
-    <h3>{{ cert.title }} ({{ cert.year }})</h3>
-    <p>{{ cert.description }}</p>
-  </div>
+<section class="cv-section">
+  <h3>Certificates</h3>
+  <ul>
+    <li *ngFor="let cert of certificates">
+      <a [href]="cert.imageUrl" target="_blank" rel="noopener noreferrer">
+        <img [src]="cert.imageUrl" [alt]="cert.name">
+      </a>
+    </li>
+  </ul>
 </section>

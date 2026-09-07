@@ -1,23 +1,25 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CertificatesService } from '../services/certificates-service/certificates';
-import { map } from 'rxjs/operators';
+import { Component } from '@angular/core';
+
+interface Certificate {
+  name: string;
+  imageUrl: string;
+}
 
 @Component({
   selector: 'app-certificates',
   standalone: false,
-  templateUrl: './certificates.html'
+  templateUrl: './certificates.html',
+  styleUrl: './certificates.css'
 })
-export class Certificates implements OnInit {
-  certificates: any[] = [];
-
-  constructor(private certificatesService: CertificatesService, private cdr: ChangeDetectorRef) {}
-
-  ngOnInit(): void {
-    this.certificatesService.getCertificates().snapshotChanges().pipe(
-      map(changes => changes.map(c => ({ id: c.payload.doc.id, ...c.payload.doc.data() })))
-    ).subscribe(data => {
-      this.certificates = data;
-      this.cdr.detectChanges();
-    });
-  }
+export class Certificates {
+  certificates: Certificate[] = [
+    {
+      name: 'Python',
+      imageUrl: 'https://res.cloudinary.com/dzjnywhya/image/upload/v1788795055/Carlos_Jes%C3%BAs_M%C3%A9ndez_Coria_-_Python_urmy60.png'
+    },
+    {
+      name: 'Pandas',
+      imageUrl: 'https://res.cloudinary.com/dzjnywhya/image/upload/v1788795030/Carlos_Jes%C3%BAs_M%C3%A9ndez_Coria_-_Pandas_r6jmah.png'
+    }
+  ];
 }
